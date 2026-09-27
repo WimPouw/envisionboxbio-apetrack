@@ -1,15 +1,49 @@
 # envisionboxbio-apetrack
 
-Zero-shot detection, tracking and pose estimation of apes in video: no training, fine-tuning or labelling.
+Detection and pose estimation of apes in video without training or labeling (zero-shot).
 
-[TODO: authors, affiliations]
+Wim Pouw, Department of Computational Cognitive Science, Tilburg University
 
-[TODO: demo gif / link to the demo page]
+![envisionboxbio-apetrack on gibbons, chimpanzees and bonobos](images/demo_grid.gif)
 
-**Pipeline**: OWLv2 (boxes, prompted with ape names) → ByteTrack (track IDs within a video) + stitching across
-short occlusions → Savitzky-Golay smoothing → OpenApePose (16 keypoints per ape) → smoothing → CSV + labelled video.
+[TODO: link to the demo page]
 
-[TODO: short description / intended use]
+**Pipeline**: OWLv2 (boxes, prompted with ape names) -> ByteTrack (track IDs within a video) + stitching across
+short occlusions -> Savitzky-Golay smoothing bounding boxes -> OpenApePose (16 keypoints per ape) -> Savitzky-Golay smoothing smoothing keypoints -> CSV + labelled video.
+
+The current tool serves as an easy to use "out of the box" pose tracker for apes. While there are many easy 
+to use deep learning frameworks to train one's own model with your own labeled data, to my surprise there
+were no easy to use ape-specific tracking that work on any video. The available software, like OpenApePose (Desai et al., 2023) for keypoint detection,
+were however there to be easily combined with powerful top-down bounding box detection models (Owlv2), which together with 
+software for stable detection over sequences (ByteTrack), makes a promising pose estimation tool. 
+
+OpenApePose (Desai, 2023) was trained on 71,868 annotated images:
+- 18,010 chimpanzees (*Pan troglodytes*)
+- 11,685 bonobos (*Pan paniscus*) 
+- 12,905 gorillas (*Gorilla gorilla*)
+- 12,722 orangutans (*Pongo sp.*)
+- 9274 gibbons (genus *Hylobates* and *Nomascus*)
+- 7272 siamangs (*Symphalangus syndactylus*)
+
+Please reach out to w.pouw@tilburguniversity.edu if you want to help out with proper evaluation against state of the art (but usually less user-friendly) computer vision models.
+
+## Citation
+This python package is a productive recombination of available and openly licensed software. Therefore first and foremost these packages need to be cited.
+
+Please also cite the models it uses:
+- OWLv2: Minderer, M., Gritsenko, A., & Houlsby, N. (2023). Scaling open-vocabulary object detection. Advances in Neural Information Processing Systems, 36, 72983-73007. [https://doi.org/10.52202/075280-3191](https://doi.org/10.52202/075280-3191)
+- ByteTrack: Zhang, Y., Sun, P., Jiang, Y., Yu, D., Weng, F., Yuan, Z., ... & Wang, X. (2022, October). Bytetrack: Multi-object tracking by associating every detection box. In European conference on computer vision (pp. 1-21). Cham: Springer Nature Switzerland. [https://doi.org/10.1007/978-3-031-20047-2_1](https://doi.org/10.1007/978-3-031-20047-2_1)
+- OpenApePose: Desai, N., Bala, P., Richardson, R., Raper, J., Zimmermann, J., & Hayden, B. (2023). OpenApePose, a database of annotated ape photographs for pose estimation. elife, 12, RP86873. [https://doi.org/10.7554/eLife.86873.3](https://doi.org/10.7554/eLife.86873.3)
+
+Some of the chimpanzee samples used for testing were from the open-source data from:
+- Wiltshire, C., Lewis‐Cheetham, J., Komedová, V., Matsuzawa, T., Graham, K. E., & Hobaiter, C. (2023). DeepWild: Application of the pose estimation tool DeepLabCut for behaviour tracking in wild chimpanzees and bonobos. Journal of Animal Ecology, 92(8), 1560-1574. [ https://doi.org/10.1111/1365-2656.13932]( https://doi.org/10.1111/1365-2656.13932)
+
+Siamang samples were from youtube () and recordings related to the following work:
+- Pouw, W., Kehy, M., Gamba, M., & Ravignani, A. (2026). Amplitude Increases of Vocalizations are Associated with Body Accelerations in Siamang (Symphalangus syndactylus). International Journal of Comparative Psychology, 39. http://dx.doi.org/10.46867/ijcp.53165 
+
+# Citation envisionboxbio-apetrack
+For the citation of this python package please cite: 
+- [forthcoming]
 
 ## Installation
 
@@ -22,7 +56,7 @@ conda activate apetrack
 pip install torch torchvision --index-url https://download.pytorch.org/whl/cu126
 pip install envisionboxbio-apetrack
 ```
-Pick the CUDA build that matches your driver: https://pytorch.org/get-started/locally/
+Pick the CUDA build that matches your driver: https://pytorch.org/get-started/locally/. Pick the torchvision installation that matches your cuda version.
 
 **CPU only**
 ```bash
@@ -32,7 +66,7 @@ pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
 pip install envisionboxbio-apetrack
 ```
 
-No system ffmpeg, accounts or API keys are needed. On first use the package downloads the OWLv2 detector
+To increase user-friendly nature of this package, no system ffmpeg is needed, accounts or API keys are NOT needed. On first use the package downloads the OWLv2 detector
 (~0.6 GB, Hugging Face Hub) and the OpenApePose weights (~130 MB, Zenodo) into your cache folder.
 
 ## Usage
@@ -108,23 +142,14 @@ Measured on a laptop (NVIDIA RTX 3500 Ada 12 GB; 22-core Intel CPU), 1080p video
 On CPU, use `detect_every=5` (or higher) and `draw=()` if you only need the CSV.
 
 ## Limitations
-
-[TODO: discuss ID swaps during close contact; no identity across videos; small/far-away apes (< ~40 px);
-limb keypoints on wild apes; monkeys]
+Full evaluation still needs to be performed. Distant apes or overlapping apes are not tracked well. 
+It is limited to apes, monkeys will likely not be tracked well.
 
 ## Evaluation
+- Planned (if you want to collaborate on this reach out to w.pouw@tilburguniversity.edu)
 
-[TODO: summary of the tuning/evaluation (siamang pseudo-ground truth; DeepWild)]
-
-## Citation
-
-[TODO: cite this package]
-
-Please also cite the models it uses:
-- OWLv2: [TODO: Minderer, Gritsenko & Houlsby (2023). Scaling open-vocabulary object detection. NeurIPS.]
-- ByteTrack: [TODO: Zhang et al. (2022). ByteTrack: multi-object tracking by associating every detection box. ECCV.]
-- OpenApePose: [TODO: Desai et al. (2023). OpenApePose, a database of annotated ape photographs for pose estimation. eLife 12:RP86873.]
+## OpenApe Pose model
+We redistributed the trained OpenApePose model (HRNet-W48, file hrnet_w48_oap_256x192_full.pth) on Zenodo (https://zenodo.org/records/22989835), which was originally deposited on Dryad under public domain (CC0) (https://doi.org/10.5061/dryad.c59zw3rds) and here released under the MIT license in the repository (https://github.com/desai-nisarg/OpenApePose). The only change is a conversion to safetensors [fp16], keeping the backbone and keypoint head weights; the model was not retrained or modified. Please cite the original authors (Desai et al., 2023).
 
 ## Licence
-
-Code: MIT. Model weights: OWLv2 Apache-2.0; OpenApePose [TODO].
+MIT. Model weights: OWLv2 Apache-2.0; OpenApePose weights CC0 license.

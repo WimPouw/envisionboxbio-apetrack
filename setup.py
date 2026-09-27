@@ -9,16 +9,16 @@ with open("README.md", encoding="utf-8") as f:
 setup(
     name="envisionboxbio-apetrack",
     version="0.1.0",
-    author="Wim Pouw",                                   # TODO: author list
-    author_email="wim.pouw@donders.ru.nl",
+    author="Wim Pouw",
+    author_email="w.pouw@tilburgunivesity.edu",
     description="Zero-shot multi-ape detection, tracking and pose estimation in video (OWLv2 + ByteTrack + OpenApePose).",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/wimpouw/envisionboxbio-apetrack",   # TODO: repository URL
+    url="https://github.com/wimpouw/envisionboxbio-apetrack",
     packages=find_packages(include=["envisionboxbio_apetrack", "envisionboxbio_apetrack.*"]),
     classifiers=[
         "Programming Language :: Python :: 3",
-        "License :: OSI Approved :: MIT License",
+        "License :: MIT License",
         "Operating System :: OS Independent",
         "Topic :: Scientific/Engineering :: Image Recognition",
     ],

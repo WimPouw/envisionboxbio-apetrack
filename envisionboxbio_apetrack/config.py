@@ -7,7 +7,7 @@ from typing import Optional, Tuple
 SMOOTHING = {"none": 0.0, "low": 0.1, "medium": 0.25, "high": 0.5}
 
 POSE_WEIGHTS_FILE = "openapepose_hrnet_w48_fp16.safetensors"
-POSE_WEIGHTS_URL = "https://zenodo.org/records/TODO/files/openapepose_hrnet_w48_fp16.safetensors"   # TODO (README_developer.md)
+POSE_WEIGHTS_URL = "https://zenodo.org/records/22989835/files/openapepose_hrnet_w48_fp16.safetensors?download=1"
 POSE_WEIGHTS_SHA256 = "9ac7636c3b086367a9728164537642c5d87020f1337d181e4ba779330afea8c7"
 
 

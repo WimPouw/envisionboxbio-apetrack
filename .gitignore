@@ -9,3 +9,5 @@ demo/_site/
 demo/.quarto/
 *.pyc
 evaluation/data/
+*.log
+demo/images/

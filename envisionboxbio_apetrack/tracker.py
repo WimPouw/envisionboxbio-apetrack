@@ -16,8 +16,6 @@ from .config import SMOOTHING, Config
 from .weights import pose_weights_path
 
 VIDEO_EXTENSIONS = (".mp4", ".mov", ".avi", ".mts", ".m2ts", ".mkv", ".mpg", ".mpeg", ".wmv", ".m4v")
-CITE = ("envisionboxbio-apetrack uses OWLv2 (Minderer et al. 2023), ByteTrack (Zhang et al. 2022) and OpenApePose "
-        "(Desai et al. 2023). Please cite them; see the README.")
 
 
 def _has_audio(path):
@@ -40,7 +38,6 @@ class ApeTracker:
                 raise ValueError(f"smoothing must be one of {list(SMOOTHING)}, not {level!r}")
         self.device = self.config.device or ("cuda" if torch.cuda.is_available() else "cpu")
         self._detector = self._pose = None
-        print(CITE)
 
     # models are loaded on first use, so re-rendering from saved detections needs no detector
     @property
