@@ -40,7 +40,7 @@ class Config:
     pose_weights: Optional[str] = None         # local .safetensors file; None = download on first use
 
     # --- output video ---
-    draw: Tuple[str, ...] = ("skeleton",)      # any of "skeleton", "points"; () = no video
+    draw: Tuple[str, ...] = ("points",)        # any of "points", "skeleton"; () = no video
     output_width: Optional[int] = None         # None = same size as the input
     min_likelihood_draw: float = 0.0           # hide keypoints/limbs below this likelihood
     device: Optional[str] = None               # None = cuda if available, else cpu

@@ -18,6 +18,7 @@ were however there to be easily combined with powerful top-down bounding box det
 software for stable detection over sequences (ByteTrack), makes a promising pose estimation tool. 
 
 OpenApePose (Desai, 2023) was trained on 71,868 annotated images:
+
 - 18,010 chimpanzees (*Pan troglodytes*)
 - 11,685 bonobos (*Pan paniscus*) 
 - 12,905 gorillas (*Gorilla gorilla*)
@@ -28,22 +29,28 @@ OpenApePose (Desai, 2023) was trained on 71,868 annotated images:
 Please reach out to w.pouw@tilburguniversity.edu if you want to help out with proper evaluation against state of the art (but usually less user-friendly) computer vision models.
 
 ## Citation
-This python package is a productive recombination of available and openly licensed software. Therefore first and foremost these packages need to be cited.
 
-Please also cite the models it uses:
-- OWLv2: Minderer, M., Gritsenko, A., & Houlsby, N. (2023). Scaling open-vocabulary object detection. Advances in Neural Information Processing Systems, 36, 72983-73007. [https://doi.org/10.52202/075280-3191](https://doi.org/10.52202/075280-3191)
-- ByteTrack: Zhang, Y., Sun, P., Jiang, Y., Yu, D., Weng, F., Yuan, Z., ... & Wang, X. (2022, October). Bytetrack: Multi-object tracking by associating every detection box. In European conference on computer vision (pp. 1-21). Cham: Springer Nature Switzerland. [https://doi.org/10.1007/978-3-031-20047-2_1](https://doi.org/10.1007/978-3-031-20047-2_1)
-- OpenApePose: Desai, N., Bala, P., Richardson, R., Raper, J., Zimmermann, J., & Hayden, B. (2023). OpenApePose, a database of annotated ape photographs for pose estimation. elife, 12, RP86873. [https://doi.org/10.7554/eLife.86873.3](https://doi.org/10.7554/eLife.86873.3)
+### Citing envisionboxbio-apetrack
+
+- [forthcoming]
+
+### Citing the components
+
+This python package is a productive recombination of available and openly licensed software. Therefore first and foremost these packages need to be cited:
+
+- **OWLv2**: Minderer, M., Gritsenko, A., & Houlsby, N. (2023). Scaling open-vocabulary object detection. *Advances in Neural Information Processing Systems, 36*, 72983–73007. <https://doi.org/10.52202/075280-3191>
+- **ByteTrack**: Zhang, Y., Sun, P., Jiang, Y., Yu, D., Weng, F., Yuan, Z., ... & Wang, X. (2022). ByteTrack: Multi-object tracking by associating every detection box. In *European Conference on Computer Vision* (pp. 1–21). Springer Nature Switzerland. <https://doi.org/10.1007/978-3-031-20047-2_1>
+- **OpenApePose**: Desai, N., Bala, P., Richardson, R., Raper, J., Zimmermann, J., & Hayden, B. (2023). OpenApePose, a database of annotated ape photographs for pose estimation. *eLife, 12*, RP86873. <https://doi.org/10.7554/eLife.86873.3>
+
+### Data used for testing
 
 Some of the chimpanzee samples used for testing were from the open-source data from:
-- Wiltshire, C., Lewis‐Cheetham, J., Komedová, V., Matsuzawa, T., Graham, K. E., & Hobaiter, C. (2023). DeepWild: Application of the pose estimation tool DeepLabCut for behaviour tracking in wild chimpanzees and bonobos. Journal of Animal Ecology, 92(8), 1560-1574. [ https://doi.org/10.1111/1365-2656.13932]( https://doi.org/10.1111/1365-2656.13932)
 
-Siamang samples were from youtube () and recordings related to the following work:
-- Pouw, W., Kehy, M., Gamba, M., & Ravignani, A. (2026). Amplitude Increases of Vocalizations are Associated with Body Accelerations in Siamang (Symphalangus syndactylus). International Journal of Comparative Psychology, 39. http://dx.doi.org/10.46867/ijcp.53165 
+- Wiltshire, C., Lewis‐Cheetham, J., Komedová, V., Matsuzawa, T., Graham, K. E., & Hobaiter, C. (2023). DeepWild: Application of the pose estimation tool DeepLabCut for behaviour tracking in wild chimpanzees and bonobos. *Journal of Animal Ecology, 92*(8), 1560–1574. <https://doi.org/10.1111/1365-2656.13932>
 
-# Citation envisionboxbio-apetrack
-For the citation of this python package please cite: 
-- [forthcoming]
+Siamang samples were from [YouTube](https://www.youtube.com/watch?v=MLMRHScRnhs) and recordings related to the following work:
+
+- Pouw, W., Kehy, M., Gamba, M., & Ravignani, A. (2026). Amplitude increases of vocalizations are associated with body accelerations in siamang (*Symphalangus syndactylus*). *International Journal of Comparative Psychology, 39*. <https://doi.org/10.46867/ijcp.53165>
 
 ## Installation
 
@@ -95,7 +102,7 @@ tracker = ApeTracker(
 | file | content |
 |---|---|
 | `<name>_tracks.csv` | one row per ape per frame: `frame`, `time_s`, `track_id`, `det_conf`, `interpolated`, `box_x`, `box_y`, `box_w`, `box_h` (smoothed; `raw_box_*` unsmoothed), and `<keypoint>_x`, `<keypoint>_y`, `<keypoint>_likelihood` for the 16 keypoints |
-| `<name>_skeleton.mp4`, `<name>_points.mp4` | labelled video(s) |
+| `<name>_points.mp4` (default), `<name>_skeleton.mp4` | labelled video(s): keypoints as points or as a skeleton (`draw`) |
 | `<name>_detections.csv` | raw detections; reused when you process the video again with other tracking/smoothing settings |
 | `apetrack_log.csv` | `process_folder` only: status, time and number of apes per video |
 
@@ -146,10 +153,11 @@ Full evaluation still needs to be performed. Distant apes or overlapping apes ar
 It is limited to apes, monkeys will likely not be tracked well.
 
 ## Evaluation
+
 - Planned (if you want to collaborate on this reach out to w.pouw@tilburguniversity.edu)
 
 ## OpenApe Pose model
-We redistributed the trained OpenApePose model (HRNet-W48, file hrnet_w48_oap_256x192_full.pth) on Zenodo (https://zenodo.org/records/22989835), which was originally deposited on Dryad under public domain (CC0) (https://doi.org/10.5061/dryad.c59zw3rds) and here released under the MIT license in the repository (https://github.com/desai-nisarg/OpenApePose). The only change is a conversion to safetensors [fp16], keeping the backbone and keypoint head weights; the model was not retrained or modified. Please cite the original authors (Desai et al., 2023).
+We redistributed the trained OpenApePose model (HRNet-W48, file hrnet_w48_oap_256x192_full.pth) on Zenodo (<https://zenodo.org/records/22989835>), which was originally deposited on Dryad under public domain (CC0) (<https://doi.org/10.5061/dryad.c59zw3rds>) and here released under the MIT license in the repository (<https://github.com/desai-nisarg/OpenApePose>). The only change is a conversion to safetensors [fp16], keeping the backbone and keypoint head weights; the model was not retrained or modified. Please cite the original authors (Desai et al., 2023).
 
 ## Licence
 MIT. Model weights: OWLv2 Apache-2.0; OpenApePose weights CC0 license.

@@ -1,21 +1,6 @@
 # README_developer: to do before/at release
 
-## 0. Status and release order
-Done:
-- [x] Package code, tested in a clean env (GPU + CPU); tuned defaults; boxes + keypoints smoothing; skeleton/points videos
-- [x] OpenApePose weights on Zenodo (https://zenodo.org/records/22989835); URL in `config.py`; first-use download
-      + SHA-256 tested from an empty cache
-- [x] OpenApePose licence settled: CC0 (Dryad), see README "OpenApe Pose model"
-- [x] Citations of OWLv2, ByteTrack, OpenApePose printed on `import envisionboxbio_apetrack` (off: `APETRACK_QUIET=1`);
-      text in `envisionboxbio_apetrack/citation.py` = README "Citation" (update both if one changes)
-- [x] Demo: 35 samples x 4 smoothing levels x points/skeleton; Quarto page with intro, citations, licence (from
-      README at render time) + widget + code dropdowns; README GIF (`images/demo_grid.gif`)
-
 Fix before release (found in the file check):
-- [ ] `CITATION.cff`: `cff-version: 0.1.0` -> `cff-version: 1.2.0` (the file-format version, not the package version)
-- [ ] `CITATION.cff`: the line `date-released: YYYY-MM-DD   and   doi: <Zenodo DOI>` is not valid: comment it out or
-      remove it until after the Zenodo release (an invalid CITATION.cff makes Zenodo's GitHub archiving fail)
-- [ ] `setup.py`: `author_email` has a typo (`tilburgunivesity` -> `tilburguniversity`)
 - [ ] README `[TODO: link to the demo page]`; Quarto page: GitHub URL of the README, "what to look for" TODO
 
 Release order:
@@ -24,9 +9,9 @@ Release order:
        conda create -n apetrack-local python=3.11 -y && conda activate apetrack-local
        pip install torch torchvision --index-url https://download.pytorch.org/whl/cu126
        pip install /mnt/data/Projects/envisionboxbio-apetrack        # or: pip install dist/envisionboxbio_apetrack-0.1.0-py3-none-any.whl
-       python -c "from envisionboxbio_apetrack import ApeTracker; ApeTracker().process_video('some.mp4', 'out/')"
+       python -c "from envisionboxbio_apetrack import ApeTracker; ApeTracker().process_video('/mnt/data/Projects/envisionboxbio-apetrack/demo/samples/bossou12.mp4', '/home/wim/Downloads/testingenvisionboxbio/')"
        ```
-2. [ ] **Check all files** (the fixes above; `twine check dist/*`; `git status` shows no large/ignored files).
+2. [ ] **Check all files** (the fixes above; `twine check dist/*` passed on 2026-09-27 after the README/citation edits; `git status` shows no large/ignored files).
 3. [ ] **GitHub**: `git init`, commit, push, make the repository public.
 4. [ ] **Zenodo** (section 2 B + C): switch the repo on in Zenodo -> GitHub release `v0.1.0` -> concept DOI into
        `CITATION.cff` + README -> link the weights record ("is supplement to").
@@ -35,9 +20,7 @@ Release order:
 7. [ ] **Quarto website** in a separate repository (`demo/_site/`, ~1.5 GB with videos) [you].
 
 ## 1. Licences (before publishing anything)
-- [x] **OpenApePose weights**: CC0 (Dryad), see README. (Was: ask the authors (Desai et al. 2023, eLife 12:RP86873) for permission to redistribute
-      the converted weights and under which licence. `models/MITLicense` in the old Lab 5 folder is an unfilled MIT
-      template, so the licence is not clear yet. Fill it into README "Licence" and the Zenodo record.
+- [x] **OpenApePose weights**: CC0 (Dryad), see README "OpenApe Pose model"; `LICENSE` note updated.
 - [ ] OWLv2 (`google/owlv2-base-patch16-ensemble`): Apache-2.0. Not redistributed (downloaded from Hugging Face).
 - [ ] ByteTrack via `supervision` (MIT). Nothing to archive.
 - [ ] Fill author list: `setup.py`, `CITATION.cff`, `LICENSE`.
@@ -137,9 +120,14 @@ Zenodo too if you want the package independent of Hugging Face.
 Torch is not pinned to a CUDA build on purpose: users install the GPU or CPU torch first (README), pip then keeps it.
 
 ## 5. Demo page (Quarto)
+- Demo requirements: `demo/requirements.txt` (package from PyPI + jupyter, tabulate, moviepy; torch first).
 - Videos: `python tools/make_demo.py` (GPU; ~1.5 h for all samples). Samples in `demo/samples/` (each < 100 MB;
   grooming2 and wamba12 are cut copies, originals in the old LABEXPERIMENTING folder).
-- Page: `cd demo && quarto render` (needs `pip install jupyter tabulate` in the env with the package).
+- Page: `cd demo && quarto render` (also works from RStudio). The page runs Python cells that import the package,
+  using the Jupyter kernel named `apetrack` (`jupyter: apetrack` in index.qmd). Register it once from an env that has
+  the package + `pip install jupyter tabulate`:
+  `python -m ipykernel install --user --name apetrack --display-name "Python (apetrack)"`
+  (currently registered: the `apetrack-pkgtest` env). Without it the render fails and leaves `_site/` empty.
   The settings table and code dropdowns are generated from the package source at render time.
 - `demo/output/` and `demo/samples/` are git-ignored (hundreds of MB). Host the rendered `demo/_site/` (with videos)
   e.g. on the envisionBOX website server, not in the git repository. [TODO: decide where]
