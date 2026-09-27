@@ -1,0 +1,17 @@
+project:
+  type: website
+  output-dir: _site
+  resources:
+    - output/**/*.mp4
+
+website:
+  title: "envisionboxbio-apetrack"
+
+format:
+  html:
+    theme: cosmo
+    toc: true
+    code-copy: true
+
+execute:
+  echo: false

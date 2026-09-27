@@ -1,0 +1,10 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below, and cite OWLv2, ByteTrack and OpenApePose (see README)."
+authors:
+- family-names: "Pouw"
+  given-names: "Wim"
+  orcid: "https://orcid.org/0000-0003-2729-6502"
+title: "envisionboxbio-apetrack: zero-shot multi-ape tracking and pose estimation"
+version: 0.1.0
+date-released: TODO
+url: "https://pypi.org/project/envisionboxbio-apetrack/"

@@ -1,0 +1,197 @@
+---
+title: "envisionboxbio-apetrack"
+subtitle: "Zero-shot multi-ape detection, tracking and pose estimation in video"
+jupyter: python3
+---
+
+[TODO: authors, affiliations]
+
+[TODO: one-paragraph introduction]
+
+## Demo
+
+```{python}
+#| output: asis
+import json, os
+manifest = json.load(open("output/manifest.json"))
+# order: gibbons (Chiba clips by number, then grooming2) with the chimpanzee/bonobo clips spread evenly among them
+import re
+gib = sorted([m for m in manifest if m["name"].startswith(("Gibbons", "grooming"))],
+             key=lambda m: int(re.search(r"_(\d+)_", m["name"]).group(1)) if m["name"].startswith("Gibbons") else 99)
+apes = sorted([m for m in manifest if m not in gib], key=lambda m: m["name"])
+step = (len(gib) + len(apes)) / max(len(apes), 1)
+slots = {round(step * (i + 0.5)) for i in range(len(apes))}
+ordered, gi, ai = [], iter(gib), iter(apes)
+for k in range(len(gib) + len(apes)):
+    ordered.append(next(ai) if k in slots else next(gi, None) or next(ai))
+manifest = ordered
+print(f"<script>const MANIFEST = {json.dumps(manifest)};</script>")
+```
+
+```{=html}
+<style>
+  #viewer { max-width: 960px; }
+  #viewer .controls { display: flex; flex-wrap: wrap; gap: .5rem 1rem; align-items: center; margin-bottom: .6rem; }
+  #viewer select { max-width: 26rem; }
+  #viewer .seg { display: inline-flex; border: 1px solid #adb5bd; border-radius: .4rem; overflow: hidden; }
+  #viewer .seg button { border: 0; background: transparent; padding: .25rem .7rem; cursor: pointer; }
+  #viewer .seg button.on { background: #2780e3; color: #fff; }
+  #viewer video { width: 100%; background: #000; border-radius: .3rem; }
+  #viewer .info { font-size: .85rem; color: #6c757d; margin-top: .3rem; }
+</style>
+<div id="viewer">
+  <div class="controls">
+    <button id="prev" class="btn btn-sm btn-outline-secondary" title="previous (←)">◀</button>
+    <select id="sample" class="form-select form-select-sm"></select>
+    <button id="next" class="btn btn-sm btn-outline-secondary" title="next (→)">▶</button>
+  </div>
+  <div class="controls">
+    <span>smoothing</span><span class="seg" id="level"></span>
+    <span>draw</span><span class="seg" id="style"></span>
+    <button id="sound" class="btn btn-sm btn-outline-secondary">🔇 sound off</button>
+  </div>
+  <video id="video" controls autoplay muted loop playsinline></video>
+  <div class="info" id="info"></div>
+</div>
+<script>
+(() => {
+  const levels = ["none", "low", "medium", "high"], styles = ["points", "skeleton"];
+  let s = 0, level = "low", style = "points";
+  const $ = id => document.getElementById(id), vid = $("video");
+  MANIFEST.forEach((m, i) => $("sample").add(new Option(m.name, i)));
+  function seg(el, opts, get, set) {
+    opts.forEach(o => { const b = document.createElement("button"); b.textContent = o;
+      b.onclick = () => { set(o); show(true); }; el.appendChild(b); });
+    return () => [...el.children].forEach(b => b.classList.toggle("on", b.textContent === get()));
+  }
+  const markLevel = seg($("level"), levels, () => level, v => level = v);
+  const markStyle = seg($("style"), styles, () => style, v => style = v);
+  function show(keepTime) {
+    const m = MANIFEST[s], t = keepTime ? vid.currentTime : 0;
+    $("sample").value = s; markLevel(); markStyle();
+    const muted = vid.muted;
+    vid.src = m.levels[level].videos[style];
+    vid.muted = muted;                                              // keep the sound setting across switches
+    vid.addEventListener("loadedmetadata", () => { vid.currentTime = Math.min(t, vid.duration || t); }, { once: true });
+    $("info").textContent = `${m.file} · ${m.width}×${m.height} · ${m.fps} fps in → ${m.fps_out} fps out · ` +
+      `${m.frames_in} frames in, ${m.frames_out} out · ${m.seconds} s · ${m.size_mb} MB · apes tracked: ${m.levels[level].apes}`;
+  }
+  $("sound").onclick = () => { vid.muted = !vid.muted;
+    $("sound").textContent = vid.muted ? "🔇 sound off" : "🔊 sound on"; vid.play(); };
+  vid.addEventListener("volumechange", () => { $("sound").textContent = vid.muted ? "🔇 sound off" : "🔊 sound on"; });
+  $("sample").onchange = e => { s = +e.target.value; show(false); };
+  $("prev").onclick = () => { s = (s - 1 + MANIFEST.length) % MANIFEST.length; show(false); };
+  $("next").onclick = () => { s = (s + 1) % MANIFEST.length; show(false); };
+  document.addEventListener("keydown", e => { if (e.target.tagName === "SELECT") return;
+    if (e.key === "ArrowLeft") $("prev").click(); if (e.key === "ArrowRight") $("next").click(); });
+  show(false);
+})();
+</script>
+```
+
+[TODO: what to look for in the demo (smoothing levels, interpolated boxes, IDs)]
+
+## Installation
+
+GPU (NVIDIA):
+
+```bash
+conda create -n apetrack python=3.11 -y
+conda activate apetrack
+pip install torch torchvision --index-url https://download.pytorch.org/whl/cu126
+pip install envisionboxbio-apetrack
+```
+
+CPU only:
+
+```bash
+conda create -n apetrack python=3.11 -y
+conda activate apetrack
+pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
+pip install envisionboxbio-apetrack
+```
+
+[TODO: note on first-use downloads, speed on GPU vs CPU]
+
+## Tracking apes
+
+```python
+from envisionboxbio_apetrack import ApeTracker
+
+tracker = ApeTracker()                                   # default settings
+tracker.process_video("clip.mp4", "output/")             # one video
+tracker.process_folder("videos/", "output/")             # every video in a folder
+
+# other settings, e.g.
+tracker = ApeTracker(box_smoothing="medium", keypoint_smoothing="medium", draw=("skeleton", "points"))
+```
+
+Per video: `<name>_tracks.csv` (one row per ape per frame: box, track ID, 16 keypoints with likelihood),
+`<name>_skeleton.mp4` / `<name>_points.mp4`, and `<name>_detections.csv` (raw detections, reused when you
+re-run with other tracking or smoothing settings).
+
+[TODO: CSV example and one plot]
+
+## How videos are transformed
+
+| | output |
+|---|---|
+| frame rate | same as the input (e.g. 25 fps in → 25 fps out); one output frame and one CSV frame index per input frame |
+| resolution | same as the input unless `output_width` is set (the demo uses 960); CSV coordinates always in input pixels |
+| interlaced video | deinterlaced, one frame per frame (frame rate unchanged) |
+| audio | copied into the labelled videos |
+| codec | H.264 .mp4 |
+
+The demo videos, measured:
+
+```{python}
+import pandas as pd
+from IPython.display import Markdown
+df = pd.DataFrame([{"video": m["file"], "size": f'{m["width"]}×{m["height"]}', "fps in": m["fps"], "fps out": m["fps_out"],
+                    "frames in": m["frames_in"], "frames out": m["frames_out"]} for m in manifest])
+Markdown(df.to_markdown(index=False))
+```
+
+## Settings
+
+```{python}
+import dataclasses
+from envisionboxbio_apetrack import Config, SMOOTHING
+rows = [{"setting": f.name, "default": repr(f.default if f.default is not dataclasses.MISSING else f.default_factory())}
+        for f in dataclasses.fields(Config) if f.name != "extra"]
+Markdown(pd.DataFrame(rows).to_markdown(index=False) + "\n\nSmoothing windows (seconds, Savitzky-Golay order 2): " +
+         ", ".join(f"{k} {v}" for k, v in SMOOTHING.items()))
+```
+
+## Under the hood
+
+```{python}
+#| output: asis
+import inspect
+from envisionboxbio_apetrack import config, detect, pose, smooth, track, tracker
+
+def dropdown(title, *objs):
+    code = "\n\n".join(inspect.getsource(o) for o in objs)
+    print(f"<details><summary><b>{title}</b></summary>\n\n```python\n{code}\n```\n\n</details>\n")
+
+dropdown("The whole pipeline (ApeTracker.process_video)", tracker.ApeTracker.process_video)
+dropdown("Models: OWLv2 detector (prompts, fp16, tiles)", detect.OWLv2Detector)
+dropdown("Models: OpenApePose (HRNet-W48, weights, flip test)", pose.OpenApePose, pose.load_model, pose.keypoints_for_boxes)
+dropdown("Settings (Config)", config)
+dropdown("Tracking: ByteTrack, stitching, gap filling", track.bytetrack, track.stitch_tracks, track.fill_gaps)
+dropdown("Smoothing: boxes and keypoints", smooth)
+```
+
+## Limitations
+
+[TODO: ID swaps during close contact; no identity across videos; small/far-away apes; limb keypoints on wild apes]
+
+## Evaluation
+
+[TODO: siamang pseudo-ground truth (Lab 5 SAM2 boxes); DeepWild (Wiltshire et al. 2023)]
+
+## Citation
+
+[TODO: cite this package]
+
+[TODO: cite OWLv2 (Minderer et al. 2023), ByteTrack (Zhang et al. 2022), OpenApePose (Desai et al. 2023), DeepWild (Wiltshire et al. 2023)]

@@ -1,0 +1,11 @@
+__pycache__/
+*.egg-info/
+build/
+dist/
+weights/
+demo/samples/
+demo/output/
+demo/_site/
+demo/.quarto/
+*.pyc
+evaluation/data/
