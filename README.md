@@ -6,9 +6,9 @@ Wim Pouw, Department of Computational Cognitive Science, Tilburg University
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.22992133.svg)](https://doi.org/10.5281/zenodo.22992133)
 
-![envisionboxbio-apetrack on gibbons, chimpanzees and bonobos](images/demo_grid.gif)
+![envisionboxbio-apetrack on gibbons, chimpanzees and bonobos](https://raw.githubusercontent.com/WimPouw/envisionboxbio-apetrack/main/images/demo_grid.gif)
 
-[TODO: link to the demo page]
+Demo page: [https://wimpouw.github.io/using_envisionboxbio-apetrack/](https://wimpouw.github.io/using_envisionboxbio-apetrack/)
 
 **Pipeline**: OWLv2 (boxes, prompted with ape names) -> ByteTrack (track IDs within a video) + stitching across
 short occlusions -> Savitzky-Golay smoothing bounding boxes -> OpenApePose (16 keypoints per ape) -> Savitzky-Golay smoothing smoothing keypoints -> CSV + labelled video.
