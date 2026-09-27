@@ -1,12 +1,32 @@
 ---
 title: "envisionboxbio-apetrack"
-subtitle: "Zero-shot multi-ape detection, tracking and pose estimation in video"
 jupyter: python3
+resources:
+  - images/demo_grid.gif
 ---
 
-[TODO: authors, affiliations]
+```{python}
+#| include: false
+import os
+os.environ["APETRACK_QUIET"] = "1"          # no citation print-out inside the page
+```
 
-[TODO: one-paragraph introduction]
+```{python}
+#| output: asis
+# intro, citations, weights and licence: taken verbatim from ../README.md at render time
+import re
+readme = open("../README.md", encoding="utf-8").read()
+parts = re.split(r"(?m)^(?=#{1,2} )", readme)                     # sections, each starting with its heading
+title = lambda part: part.split("\n", 1)[0].lstrip("#").strip()
+keep = ("Citation", "Citation envisionboxbio-apetrack", "OpenApe Pose model", "Licence")
+print(parts[1].split("\n", 1)[1])                                  # intro: below the H1 title (= page title)
+for part in parts[2:]:
+    if title(part) in keep:
+        print(re.sub(r"^# ", "## ", part))                           # keep the page's heading levels consistent
+```
+
+Installation, usage, outputs, settings and speed: see the
+[README](https://github.com/TODO/envisionboxbio-apetrack#readme) [TODO: GitHub URL].
 
 ## Demo
 
@@ -91,58 +111,7 @@ print(f"<script>const MANIFEST = {json.dumps(manifest)};</script>")
 
 [TODO: what to look for in the demo (smoothing levels, interpolated boxes, IDs)]
 
-## Installation
-
-GPU (NVIDIA):
-
-```bash
-conda create -n apetrack python=3.11 -y
-conda activate apetrack
-pip install torch torchvision --index-url https://download.pytorch.org/whl/cu126
-pip install envisionboxbio-apetrack
-```
-
-CPU only:
-
-```bash
-conda create -n apetrack python=3.11 -y
-conda activate apetrack
-pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
-pip install envisionboxbio-apetrack
-```
-
-[TODO: note on first-use downloads, speed on GPU vs CPU]
-
-## Tracking apes
-
-```python
-from envisionboxbio_apetrack import ApeTracker
-
-tracker = ApeTracker()                                   # default settings
-tracker.process_video("clip.mp4", "output/")             # one video
-tracker.process_folder("videos/", "output/")             # every video in a folder
-
-# other settings, e.g.
-tracker = ApeTracker(box_smoothing="medium", keypoint_smoothing="medium", draw=("skeleton", "points"))
-```
-
-Per video: `<name>_tracks.csv` (one row per ape per frame: box, track ID, 16 keypoints with likelihood),
-`<name>_skeleton.mp4` / `<name>_points.mp4`, and `<name>_detections.csv` (raw detections, reused when you
-re-run with other tracking or smoothing settings).
-
-[TODO: CSV example and one plot]
-
-## How videos are transformed
-
-| | output |
-|---|---|
-| frame rate | same as the input (e.g. 25 fps in → 25 fps out); one output frame and one CSV frame index per input frame |
-| resolution | same as the input unless `output_width` is set (the demo uses 960); CSV coordinates always in input pixels |
-| interlaced video | deinterlaced, one frame per frame (frame rate unchanged) |
-| audio | copied into the labelled videos |
-| codec | H.264 .mp4 |
-
-The demo videos, measured:
+### The demo videos, measured
 
 ```{python}
 import pandas as pd
@@ -152,7 +121,9 @@ df = pd.DataFrame([{"video": m["file"], "size": f'{m["width"]}×{m["height"]}', 
 Markdown(df.to_markdown(index=False))
 ```
 
-## Settings
+## Under the hood
+
+### All settings (`Config`)
 
 ```{python}
 import dataclasses
@@ -163,7 +134,7 @@ Markdown(pd.DataFrame(rows).to_markdown(index=False) + "\n\nSmoothing windows (s
          ", ".join(f"{k} {v}" for k, v in SMOOTHING.items()))
 ```
 
-## Under the hood
+### Code
 
 ```{python}
 #| output: asis
@@ -181,17 +152,3 @@ dropdown("Settings (Config)", config)
 dropdown("Tracking: ByteTrack, stitching, gap filling", track.bytetrack, track.stitch_tracks, track.fill_gaps)
 dropdown("Smoothing: boxes and keypoints", smooth)
 ```
-
-## Limitations
-
-[TODO: ID swaps during close contact; no identity across videos; small/far-away apes; limb keypoints on wild apes]
-
-## Evaluation
-
-[TODO: siamang pseudo-ground truth (Lab 5 SAM2 boxes); DeepWild (Wiltshire et al. 2023)]
-
-## Citation
-
-[TODO: cite this package]
-
-[TODO: cite OWLv2 (Minderer et al. 2023), ByteTrack (Zhang et al. 2022), OpenApePose (Desai et al. 2023), DeepWild (Wiltshire et al. 2023)]
