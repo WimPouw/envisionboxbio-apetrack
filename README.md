@@ -6,7 +6,7 @@ Wim Pouw, Department of Computational Cognitive Science, Tilburg University
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.22992133.svg)](https://doi.org/10.5281/zenodo.22992133)
 
-![envisionboxbio-apetrack on gibbons, chimpanzees and bonobos](https://raw.githubusercontent.com/WimPouw/envisionboxbio-apetrack/main/images/demo_grid.gif)
+![envisionboxbio-apetrack demo samples](https://raw.githubusercontent.com/WimPouw/envisionboxbio-apetrack/main/images/demo_grid.gif)
 
 Demo page: [https://wimpouw.github.io/using_envisionboxbio-apetrack/](https://wimpouw.github.io/using_envisionboxbio-apetrack/)
 
