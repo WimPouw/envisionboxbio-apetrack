@@ -1,5 +1,4 @@
-"""Default settings. Detection/tracking defaults were tuned on hand-checked siamang boxes (11 clips) and
-DeepWild (Wiltshire et al. 2023; 1577 hand-labelled chimpanzees and bonobos)."""
+"""Default settings. Detection/tracking defaults were tuned on hand-checked siamang boxes (11 clips) and DeepWild (Wiltshire et al. 2023; 1577 hand-labelled chimpanzees and bonobos)."""
 from dataclasses import dataclass, field
 from typing import Optional, Tuple
 

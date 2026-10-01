@@ -8,8 +8,8 @@ with open("README.md", encoding="utf-8") as f:
 
 setup(
     name="envisionboxbio-apetrack",
-    version="0.1.0",
-    author="Wim Pouw",
+    version="0.1.1",
+    author="Wim Pouw, Nisarg Desai",
     author_email="w.pouw@tilburguniversity.edu",
     description="Zero-shot multi-ape detection, tracking and pose estimation in video (OWLv2 + ByteTrack + OpenApePose).",
     long_description=long_description,
