@@ -4,7 +4,7 @@ Detection and pose estimation of apes in video without training or labeling (zer
 
 Wim Pouw, Department of Computational Cognitive Science, Tilburg University
 
-Nisarg Desai, Developmental and Cognitive Neuroscience, Emory University
+Nisarg Desai, Emory National Primate Research Center, Emory University
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.22992133.svg)](https://doi.org/10.5281/zenodo.22992133)
 
