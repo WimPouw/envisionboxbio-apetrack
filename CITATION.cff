@@ -4,16 +4,16 @@ authors:
 - family-names: "Pouw"
   given-names: "Wim"
   orcid: "https://orcid.org/0000-0003-2729-6502"
+- family-names: "Nisarg"
+  given-names: "Desaig"
+  orcid: "https://orcid.org/0000-0003-3210-9409"
 title: "envisionboxbio-apetrack: Zero-shot multi-ape tracking and pose estimation using OWLv2, ByteTrack and OpenApePose"
-version: 0.1.0
+version: 0.1.1
 date-released: 2026-09-27
 doi: 10.5281/zenodo.22992133
 identifiers:
 - type: doi
-  value: 10.5281/zenodo.22992133
-  description: "Version 0.1.0"
-- type: doi
   value: 10.5281/zenodo.22992132
   description: "All versions (concept DOI)"
 repository-code: "https://github.com/WimPouw/envisionboxbio-apetrack"
-# url: "https://pypi.org/project/envisionboxbio-apetrack/"
+url: "https://pypi.org/project/envisionboxbio-apetrack/"

@@ -4,6 +4,8 @@ Detection and pose estimation of apes in video without training or labeling (zer
 
 Wim Pouw, Department of Computational Cognitive Science, Tilburg University
 
+Nisarg Desai, Developmental and Cognitive Neuroscience, Emory University
+
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.22992133.svg)](https://doi.org/10.5281/zenodo.22992133)
 
 ![envisionboxbio-apetrack demo samples](https://raw.githubusercontent.com/WimPouw/envisionboxbio-apetrack/main/images/demo_grid.gif)
@@ -34,7 +36,7 @@ Please reach out to w.pouw@tilburguniversity.edu if you want to help out with pr
 
 ### Citing envisionboxbio-apetrack
 
-- Pouw, W. (2026). *envisionboxbio-apetrack: Zero-shot multi-ape tracking and pose estimation using OWLv2, ByteTrack and OpenApePose* (Version 0.1.0) [Computer software]. Zenodo. <https://doi.org/10.5281/zenodo.22992133>
+- Pouw, W., Desai, N. (2026). *envisionboxbio-apetrack: Zero-shot multi-ape tracking and pose estimation using OWLv2, ByteTrack and OpenApePose* (Version 0.1.1) [Computer software]. Zenodo. <https://doi.org/10.5281/zenodo.22992133>
 
 All versions: <https://doi.org/10.5281/zenodo.22992132>
 
