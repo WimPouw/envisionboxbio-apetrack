@@ -19,7 +19,8 @@ TRACK_COLOURS = [(255, 0, 255), (0, 200, 255), (255, 200, 0), (0, 255, 0), (255,
 
 
 def draw_frame(frame, rows, kp, style, scale, min_likelihood=0.0, frame_index=None):
-    """rows: this frame's track rows (with box and raw_box columns); kp: (n, 16, 3) in input pixels."""
+    """rows: this frame's track rows (with box and raw_box columns); kp: (n, 16, 3) in input pixels. Keypoints a
+    model does not have (NaN, e.g. ViTPose++'s head) are not drawn."""
     view = np.ascontiguousarray(cv2.resize(frame, None, fx=scale, fy=scale) if scale != 1 else frame.copy())
     t = max(1, int(round(2 * view.shape[1] / 960)))                 # line width relative to a 960-wide frame
     for j, r in enumerate(rows):
@@ -32,16 +33,17 @@ def draw_frame(frame, rows, kp, style, scale, min_likelihood=0.0, frame_index=No
         label = f"id {int(r['track_id'])}" + (" interp." if r["interpolated"] else "")
         cv2.putText(view, label, (x, max(15, y - 5)), 0, 0.3 * t, col, t)
         p = kp[j]
+        ok = np.isfinite(p).all(1) & (np.nan_to_num(p[:, 2], nan=-1) >= min_likelihood)    # NaN: not drawn
         if style == "skeleton":
             for (a, b), c in zip(EDGES, LIMB_COLOURS):
-                if min(p[a, 2], p[b, 2]) >= min_likelihood:
+                if ok[a] and ok[b]:
                     cv2.line(view, tuple((p[a, :2] * scale).astype(int)), tuple((p[b, :2] * scale).astype(int)), c, t + 1, cv2.LINE_AA)
-            for x_, y_, c in p:
-                if c >= min_likelihood:
+            for (x_, y_, c), draw in zip(p, ok):
+                if draw:
                     cv2.circle(view, (int(x_ * scale), int(y_ * scale)), t + 1, (255, 255, 255), -1, cv2.LINE_AA)
         else:
-            for x_, y_, c in p:
-                if c >= min_likelihood:
+            for (x_, y_, c), draw in zip(p, ok):
+                if draw:
                     c = min(max(c, 0), 1)
                     cv2.circle(view, (int(x_ * scale), int(y_ * scale)), 2 * t, (0, int(255 * c), int(255 * (1 - c))), -1, cv2.LINE_AA)
     if frame_index is not None:

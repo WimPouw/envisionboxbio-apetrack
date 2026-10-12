@@ -5,6 +5,10 @@ HRNet-W48 (built with timm) + a 1x1 convolution that turns the high-resolution b
 Top-down: crop the box (enlarged by `pad`, widened to 3:4 and enlarged 1.25x), resize to 192x256, run it and its
 mirror image ("flip test"), average, and take each heatmap's peak (moved a quarter pixel towards its higher
 neighbour) as the keypoint and its height as the likelihood.
+
+ViTPose++ (Xu et al. 2023, IEEE TPAMI; Hugging Face usyd-community/vitpose-plus-base,
+AP-10K expert) goes through the same steps: same input size, normalisation and heatmap size, 17 COCO keypoints that
+coco_to_keypoints maps to the 16 above (neck and hip are midpoints; it has no head point). `ensemble` combines the two.
 """
 import cv2
 import numpy as np
@@ -16,6 +20,17 @@ FLIP = [KEYPOINTS.index(k.replace("left", "X").replace("right", "left").replace(
 W, H = 192, 256                                                      # model input size
 HM_W, HM_H = W // 4, H // 4 # heatmap size (1/4 of the input)
 MEAN, STD = np.array([0.485, 0.456, 0.406]), np.array([0.229, 0.224, 0.225])
+# ViTPose++'s keypoints (COCO order) and the left/right pairs of both
+COCO = ["nose", "left_eye", "right_eye", "left_ear", "right_ear", "left_shoulder", "right_shoulder", "left_elbow",
+        "right_elbow", "left_wrist", "right_wrist", "left_hip", "right_hip", "left_knee", "right_knee", "left_ankle",
+        "right_ankle"]
+COCO_FLIP = [COCO.index(k.replace("left", "X").replace("right", "left").replace("X", "right")) for k in COCO]
+LR_PAIRS = [(KEYPOINTS.index("left_" + p), KEYPOINTS.index("right_" + p))
+            for p in ("eye", "shoulder", "elbow", "wrist", "knee", "ankle")]
+# the ensemble takes a limb from one model when the two disagree on it
+LIMBS = [[KEYPOINTS.index(k) for k in limb] for limb in (
+    ("left_shoulder", "left_elbow", "left_wrist"), ("right_shoulder", "right_elbow", "right_wrist"),
+    ("left_knee", "left_ankle"), ("right_knee", "right_ankle"), ("nose", "left_eye", "right_eye"), ("neck", "hip"))]
 
 
 class OpenApePose(torch.nn.Module):
@@ -27,6 +42,65 @@ class OpenApePose(torch.nn.Module):
 
     def forward(self, x):
         return self.head(self.backbone(x)[1])                        # [1] = 48-channel branch at 1/4 resolution
+
+
+class ViTPose(torch.nn.Module):
+    """ViTPose++ base with its AP-10K expert (dataset_index 3: best on the validation set), returning heatmaps like
+    OpenApePose. Its crops get no extra padding (as its own processor)."""
+    flip = COCO_FLIP
+    pad = 0.0
+
+    def __init__(self, hub="usyd-community/vitpose-plus-base", dataset_index=3):
+        super().__init__()
+        from transformers import VitPoseForPoseEstimation
+        self.model = VitPoseForPoseEstimation.from_pretrained(hub)
+        self.dataset_index = dataset_index
+
+    def forward(self, x):
+        idx = torch.full((len(x),), self.dataset_index, device=x.device)
+        return self.model(pixel_values=x, dataset_index=idx).heatmaps
+
+
+def coco_to_keypoints(k):
+    """(n, 17, 3) COCO keypoints -> (n, 16, 3) in KEYPOINTS order: neck = shoulder midpoint, hip = hip midpoint,
+    head = NaN (not drawn)."""
+    out = np.full((len(k), len(KEYPOINTS), 3), np.nan)
+    for j, name in enumerate(KEYPOINTS):
+        if name == "neck":
+            out[:, j] = (k[:, COCO.index("left_shoulder")] + k[:, COCO.index("right_shoulder")]) / 2
+        elif name == "hip":
+            out[:, j] = (k[:, COCO.index("left_hip")] + k[:, COCO.index("right_hip")]) / 2
+        elif name in COCO:
+            out[:, j] = k[:, COCO.index(name)]
+    return out
+
+
+def ensemble(a, v, size, max_disagreement=0.3):
+    """OpenApePose (a) and ViTPose++ (v) keypoints of the same boxes, (n, 16, 3) each; size: (n,) ape sizes in pixels
+    (square root of the box area). ViTPose++ decides left and right (OpenApePose's training data often labels body
+    left/right by image side): per left/right pair, a's two points are swapped when that brings them closer to v's.
+    Per limb (each arm, each leg, the face, neck + hip): where the two agree (every point within max_disagreement ape
+    sizes), the likelihood-weighted mean; where they do not, the whole limb from the model more confident on it, so a
+    point never ends up between two different guesses (e.g. a gibbon's wrist in mid-body). Head: OpenApePose's."""
+    a = a.copy()
+    for l, r in LR_PAIRS:
+        keep = np.linalg.norm(a[:, l, :2] - v[:, l, :2], axis=1) + np.linalg.norm(a[:, r, :2] - v[:, r, :2], axis=1)
+        swap = np.linalg.norm(a[:, l, :2] - v[:, r, :2], axis=1) + np.linalg.norm(a[:, r, :2] - v[:, l, :2], axis=1)
+        s = swap < keep
+        a[s, l], a[s, r] = a[s, r].copy(), a[s, l].copy()
+    wa = np.clip(a[..., 2], 1e-3, None)
+    wv = np.where(np.isnan(v[..., 0]), 0, np.clip(np.nan_to_num(v[..., 2]), 1e-3, None))
+    out = a.copy()
+    out[..., :2] = (wa[..., None] * a[..., :2] + wv[..., None] * np.nan_to_num(v[..., :2])) / (wa + wv)[..., None]
+    out[..., 2] = (wa * a[..., 2] + wv * np.nan_to_num(v[..., 2])) / (wa + wv)
+    far = np.linalg.norm(a[..., :2] - v[..., :2], axis=2) > max_disagreement * np.asarray(size)[:, None]   # NaN: no
+    for limb in LIMBS:
+        bad = far[:, limb].any(1)
+        take_a = bad & (a[:, limb, 2].mean(1) >= v[:, limb, 2].mean(1))
+        take_v = bad & ~take_a
+        for k in limb:
+            out[take_a, k], out[take_v, k] = a[take_a, k], v[take_v, k]
+    return out
 
 
 def load_model(weights_path, device):
@@ -116,9 +190,11 @@ class FlowFusion:
 
 def keypoints_for_boxes(model, frame_bgr, boxes_xywh, pad, device, fusion=None, frame_idx=None, track_ids=None, dark=True):
     """All boxes of one frame in one batch (plus mirrored crops). With `fusion` (a FlowFusion), each track's
-    heatmaps are fused with its previous frame's before the peaks are taken. Returns (n_boxes, 16, 3)."""
+    heatmaps are fused with its previous frame's before the peaks are taken. Returns (n_boxes, n_keypoints, 3):
+    16 (OpenApePose) or 17 (ViTPose, COCO order)."""
+    flip = getattr(model, "flip", FLIP)
     if not len(boxes_xywh):
-        return np.zeros((0, len(KEYPOINTS), 3))
+        return np.zeros((0, len(flip), 3))
     crops, Ms = [], []
     for x, y, w, h in boxes_xywh:
         M = crop_matrix(x - pad * w, y - pad * h, w * (1 + 2 * pad), h * (1 + 2 * pad))
@@ -130,7 +206,7 @@ def keypoints_for_boxes(model, frame_bgr, boxes_xywh, pad, device, fusion=None, 
         hm = model(batch).cpu().numpy()
     hms = []
     for b in range(len(Ms)):
-        mirrored = hm[2 * b + 1][FLIP][:, :, ::-1]                   # undo mirroring, swap left/right
+        mirrored = hm[2 * b + 1][flip][:, :, ::-1]                   # undo mirroring, swap left/right
         mirrored = np.concatenate([mirrored[:, :, :1], mirrored[:, :, :-1]], axis=2)      # 1-pixel shift
         hms.append((hm[2 * b] + mirrored) / 2)
     if fusion is not None:

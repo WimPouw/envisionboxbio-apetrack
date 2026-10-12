@@ -164,7 +164,7 @@ It is limited to apes, monkeys will likely not be tracked well.
 ### Versioning: Key updates
 1.1.0 - First version
 1.1.1 - Updated author list and ReadMe
-1.1.2 (not on pypi yet) - Added optical flow based heatmap fusion (see [Pfister et al., 2015](https://arxiv.org/pdf/1506.02897)) and Dark decoding (similar to MMPOSE; [Zhang et al., 2020](https://arxiv.org/pdf/1910.06278)), to optimize OpenApePose keypoint detection for video in a training-free way.
+1.1.2 (not on pypi yet) - Added optical flow based heatmap fusion (see [Pfister et al., 2015](https://arxiv.org/pdf/1506.02897)) and Dark decoding (similar to MMPOSE; [Zhang et al., 2020](https://arxiv.org/pdf/1910.06278)), to optimize OpenApePose keypoint detection for video in a training-free way. During preliminary testing we also find that VitPose++ is sometimes beating OpenApePose keypoint detection and is consistently better in differentiating left from right. We therefore should be offering both pose models as an option and we can use the ensemble method to provide the best overall tracking performance.
 
 ## Redistribution: OpenApe Pose model
 We redistributed the trained OpenApePose model in safetensor format (HRNet-W48, file hrnet_w48_oap_256x192_full.pth) on Zenodo (<https://zenodo.org/records/22989835>), which was originally deposited on Dryad under public domain (CC0) (<https://doi.org/10.5061/dryad.c59zw3rds>) and here released under the MIT license in the repository (<https://github.com/desai-nisarg/OpenApePose>). The only change is a conversion to safetensors [fp16], keeping the backbone and keypoint head weights; the model was not retrained or modified. Please cite the original authors (Desai et al., 2023).

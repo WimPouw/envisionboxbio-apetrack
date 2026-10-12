@@ -15,6 +15,7 @@ from . import detect, pose, render, smooth, track, video
 from .config import SMOOTHING, Config
 from .weights import pose_weights_path
 
+POSE_MODELS = ("ensemble", "openapepose", "vitpose")
 VIDEO_EXTENSIONS = (".mp4", ".mov", ".avi", ".mts", ".m2ts", ".mkv", ".mpg", ".mpeg", ".wmv", ".m4v")
 
 
@@ -36,8 +37,10 @@ class ApeTracker:
         for level in (self.config.box_smoothing, self.config.keypoint_smoothing):
             if level not in SMOOTHING:
                 raise ValueError(f"smoothing must be one of {list(SMOOTHING)}, not {level!r}")
+        if self.config.pose_model not in POSE_MODELS:
+            raise ValueError(f"pose_model must be one of {POSE_MODELS}, not {self.config.pose_model!r}")
         self.device = self.config.device or ("cuda" if torch.cuda.is_available() else "cpu")
-        self._detector = self._pose = None
+        self._detector = self._pose = self._vitpose = None
 
     # models are loaded on first use, so re-rendering from saved detections needs no detector
     @property
@@ -52,6 +55,28 @@ class ApeTracker:
         if self._pose is None:
             self._pose = pose.load_model(pose_weights_path(self.config.pose_weights), self.device)
         return self._pose
+
+    @property
+    def vitpose_model(self):
+        if self._vitpose is None:
+            self._vitpose = pose.ViTPose().to(self.device).eval()
+        return self._vitpose
+
+    def keypoints(self, frame, boxes_xywh, frame_idx=None, track_ids=None, fusions=None):
+        """(n_boxes, 16, 3) keypoints of one frame's boxes with the configured pose model(s). fusions: a FlowFusion
+        per model ("openapepose", "vitpose"), or None."""
+        c, fusions = self.config, fusions or {}
+        a = v = None
+        if c.pose_model in ("openapepose", "ensemble"):
+            a = pose.keypoints_for_boxes(self.pose_model, frame, boxes_xywh, c.pad, self.device,
+                                         fusions.get("openapepose"), frame_idx, track_ids, c.dark_decoding)
+        if c.pose_model in ("vitpose", "ensemble"):
+            v = pose.coco_to_keypoints(pose.keypoints_for_boxes(
+                self.vitpose_model, frame, boxes_xywh, pose.ViTPose.pad, self.device, fusions.get("vitpose"),
+                frame_idx, track_ids, c.dark_decoding))
+        if a is None or v is None:
+            return a if v is None else v
+        return pose.ensemble(a, v, np.sqrt(boxes_xywh[:, 2] * boxes_xywh[:, 3]))
 
     def process_video(self, video_path, output_folder, reuse_detections=True):
         """Writes <name>_detections.csv (raw detections, reused next time), <name>_tracks.csv and
@@ -82,14 +107,14 @@ class ApeTracker:
 
         # 3. keypoints in every box, then smooth them
         kp = np.zeros((len(tracks), len(pose.KEYPOINTS), 3))
-        fusion = pose.FlowFusion(c.flow_alpha) if c.flow_fusion else None
+        fusions = {m: pose.FlowFusion(c.flow_alpha) for m in ("openapepose", "vitpose")} if c.flow_fusion else None
         rows_of = tracks.groupby("frame").indices
         fps, size, frames = video.read_video(video_path)
         for i, frame in enumerate(tqdm(frames, desc=f"{name}: pose", unit="frame", leave=False)):
             idx = rows_of.get(i)
             if idx is not None:
-            	kp[idx] = pose.keypoints_for_boxes(self.pose_model, frame, tracks.iloc[idx][track.BOX_COLS].to_numpy(),
-                                c.pad, self.device, fusion, i, tracks.track_id.to_numpy()[idx], c.dark_decoding)
+                kp[idx] = self.keypoints(frame, tracks.iloc[idx][track.BOX_COLS].to_numpy(), i,
+                                         tracks.track_id.to_numpy()[idx], fusions)
         for k, name_k in enumerate(pose.KEYPOINTS):
             tracks[f"{name_k}_x"], tracks[f"{name_k}_y"], tracks[f"{name_k}_likelihood"] = kp[:, k, 0], kp[:, k, 1], kp[:, k, 2]
         # Not used: Adding a 2-state Viterbi to prevent swapping jitters; we are using heatmap flow fusion instead to prevent swapping

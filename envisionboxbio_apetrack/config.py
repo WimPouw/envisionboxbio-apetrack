@@ -36,8 +36,9 @@ class Config:
     box_smoothing: str = "low"                 # none | low | medium | high
     keypoint_smoothing: str = "low"            # none | low | medium | high
 
-    # --- pose: OpenApePose (Desai et al. 2023) ---
-    pad: float = 0.1                           # context around the box given to the pose model
+    # --- pose: OpenApePose (Desai et al. 2023) and/or ViTPose++ (Xu et al. 2023) ---
+    pose_model: str = "ensemble"               # ensemble (both, ViTPose++ decides left/right) | openapepose | vitpose
+    pad: float = 0.1                           # context around the box given to OpenApePose
     pose_weights: Optional[str] = None         # local .safetensors file; None = download on first use
 
     # --- output video ---
