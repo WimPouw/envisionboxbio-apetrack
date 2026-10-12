@@ -83,3 +83,36 @@ def fill_gaps(boxes, fps, max_gap_s):
                 new.append(row)
     out = pd.concat([boxes, pd.DataFrame(new, columns=TRACK_COLS)], ignore_index=True) if new else boxes
     return out.sort_values(["frame", "track_id"]).reset_index(drop=True)
+
+def _iou(a, b):
+    """IoU of two (x, y, w, h) boxes."""
+    x0, y0 = max(a[0], b[0]), max(a[1], b[1])
+    x1, y1 = min(a[0] + a[2], b[0] + b[2]), min(a[1] + a[3], b[1] + b[3])
+    inter = max(0, x1 - x0) * max(0, y1 - y0)
+    return inter / (a[2] * a[3] + b[2] * b[3] - inter + 1e-9)
+
+def fix_takeovers(boxes, min_iou=0.5, margin=0.2):
+    """Undo ID takeovers: when an ape disappears (behind another) and a track's box in the next frame continues
+    that ape's box much better than its own previous box (IoU >= min_iou and >= own IoU + margin), the box
+    belongs to the ape that disappeared. The two IDs are swapped from that frame on."""
+    if not len(boxes):
+        return boxes
+    out = boxes.sort_values(["frame", "track_id"]).reset_index(drop=True)
+    orig, xywh = out.track_id.to_numpy(), out[BOX_COLS].to_numpy(float)
+    label = {t: t for t in np.unique(orig)}                         # original ID -> ID now
+    new_ids, prev = orig.copy(), {}
+    for f in sorted(out.frame.unique()):
+        idx = np.flatnonzero(out.frame.to_numpy() == f)
+        for x in [label[t] for t in orig[idx]]:
+            cur = {label[t]: xywh[i] for t, i in zip(orig[idx], idx)}
+            gone = [y for y in prev if y not in cur]
+            if not gone or x not in cur:
+                continue
+            own = _iou(cur[x], prev[x]) if x in prev else 0.0
+            y = max(gone, key=lambda g: _iou(cur[x], prev[g]))
+            if _iou(cur[x], prev[y]) >= max(min_iou, own + margin):
+                for t, l in label.items():                         # swap x <-> y from this frame on
+                    label[t] = y if l == x else x if l == y else l
+        new_ids[idx] = [label[t] for t in orig[idx]]
+        prev = {new_ids[i]: xywh[i] for i in idx}
+    return out.assign(track_id=new_ids)

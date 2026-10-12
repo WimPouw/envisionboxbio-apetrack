@@ -36,7 +36,7 @@ Please reach out to w.pouw@tilburguniversity.edu if you want to help out with pr
 
 ### Citing envisionboxbio-apetrack
 
-- Pouw, W., Desai, N. (2026). *envisionboxbio-apetrack: Zero-shot multi-ape tracking and pose estimation using OWLv2, ByteTrack and OpenApePose* (Version 0.1.1) [Computer software]. Zenodo. <https://doi.org/10.5281/zenodo.22992133>
+- Pouw, W., Desai, N. (2026). *envisionboxbio-apetrack: Zero-shot multi-ape tracking and pose estimation using OWLv2, ByteTrack and OpenApePose* (Version 0.1.2) [Computer software]. Zenodo. <https://doi.org/10.5281/zenodo.22992133>
 
 All versions: <https://doi.org/10.5281/zenodo.22992132>
 
@@ -159,11 +159,15 @@ Full evaluation still needs to be performed. Distant apes or overlapping apes ar
 It is limited to apes, monkeys will likely not be tracked well.
 
 ## Evaluation
-
 - Planned (if you want to collaborate on this reach out to w.pouw@tilburguniversity.edu)
 
-## OpenApe Pose model
-We redistributed the trained OpenApePose model (HRNet-W48, file hrnet_w48_oap_256x192_full.pth) on Zenodo (<https://zenodo.org/records/22989835>), which was originally deposited on Dryad under public domain (CC0) (<https://doi.org/10.5061/dryad.c59zw3rds>) and here released under the MIT license in the repository (<https://github.com/desai-nisarg/OpenApePose>). The only change is a conversion to safetensors [fp16], keeping the backbone and keypoint head weights; the model was not retrained or modified. Please cite the original authors (Desai et al., 2023).
+### Versioning: Key updates
+1.1.0 - First version
+1.1.1 - Updated author list and ReadMe
+1.1.2 (not on pypi yet) - Added optical flow based heatmap fusion (see [Pfister et al., 2015](https://arxiv.org/pdf/1506.02897)) and Dark decoding (similar to MMPOSE; [Zhang et al., 2020](https://arxiv.org/pdf/1910.06278)), to optimize OpenApePose keypoint detection for video in a training-free way.
+
+## Redistribution: OpenApe Pose model
+We redistributed the trained OpenApePose model in safetensor format (HRNet-W48, file hrnet_w48_oap_256x192_full.pth) on Zenodo (<https://zenodo.org/records/22989835>), which was originally deposited on Dryad under public domain (CC0) (<https://doi.org/10.5061/dryad.c59zw3rds>) and here released under the MIT license in the repository (<https://github.com/desai-nisarg/OpenApePose>). The only change is a conversion to safetensors [fp16], keeping the backbone and keypoint head weights; the model was not retrained or modified. Please cite the original authors (Desai et al., 2023).
 
 ## Licence
 MIT. Model weights: OWLv2 Apache-2.0; OpenApePose weights CC0 license.

@@ -21,7 +21,9 @@ class Config:
     nms_iou: float = 0.7                    # merge boxes that overlap more than this
     tiles: int = 1                          # >1: also detect on tiles x tiles enlarged crops (far-away apes; slower)
     detect_every: int = 1                   # detect on every n-th frame only (CPU); boxes in between are interpolated
-
+    flow_fusion: bool = True                   # fuse each track's heatmaps with its previous frame's (optical flow)
+    flow_alpha: float = 0.5                    # weight of the current frame (1 = no fusion)
+    dark_decoding: bool = True                 # DARK sub-pixel decoding (Zhang et al. 2020) instead of quarter-pixel
     # --- tracking: ByteTrack (Zhang et al. 2022, via supervision) + stitching + gap filling ---
     track_activation_threshold: float = 0.25   # score needed to start a track
     track_buffer_s: float = 1.0                # how long a lost track is kept

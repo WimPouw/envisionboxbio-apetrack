@@ -4,6 +4,7 @@ build/
 dist/
 weights/
 demo/samples/
+demo/testing/
 demo/output/
 demo/_site/
 demo/.quarto/

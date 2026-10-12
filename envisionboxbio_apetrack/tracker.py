@@ -75,21 +75,26 @@ class ApeTracker:
         # 2. track, stitch, fill gaps, smooth boxes
         tracks = track.bytetrack(dets, fps, c.detection_threshold, c.nms_iou, c.track_activation_threshold,
                                  c.track_buffer_s, c.track_matching_threshold)
+        tracks = track.fix_takeovers(tracks)
         tracks = track.stitch_tracks(tracks, fps, c.stitch_gap_s, c.stitch_distance)
         tracks = track.fill_gaps(tracks, fps, max(c.fill_gap_s, c.stitch_gap_s, c.detect_every / fps))
         tracks = smooth.smooth_boxes(tracks, fps, c.box_smoothing)
 
         # 3. keypoints in every box, then smooth them
         kp = np.zeros((len(tracks), len(pose.KEYPOINTS), 3))
+        fusion = pose.FlowFusion(c.flow_alpha) if c.flow_fusion else None
         rows_of = tracks.groupby("frame").indices
         fps, size, frames = video.read_video(video_path)
         for i, frame in enumerate(tqdm(frames, desc=f"{name}: pose", unit="frame", leave=False)):
             idx = rows_of.get(i)
             if idx is not None:
-                kp[idx] = pose.keypoints_for_boxes(self.pose_model, frame, tracks.iloc[idx][track.BOX_COLS].to_numpy(),
-                                                   c.pad, self.device)
+            	kp[idx] = pose.keypoints_for_boxes(self.pose_model, frame, tracks.iloc[idx][track.BOX_COLS].to_numpy(),
+                                c.pad, self.device, fusion, i, tracks.track_id.to_numpy()[idx], c.dark_decoding)
         for k, name_k in enumerate(pose.KEYPOINTS):
             tracks[f"{name_k}_x"], tracks[f"{name_k}_y"], tracks[f"{name_k}_likelihood"] = kp[:, k, 0], kp[:, k, 1], kp[:, k, 2]
+        # Not used: Adding a 2-state Viterbi to prevent swapping jitters; we are using heatmap flow fusion instead to prevent swapping
+        # tracks = smooth.fix_lr_swaps(tracks)    
+        # print("test: fixlr applied")
         tracks = smooth.smooth_keypoints(tracks, pose.KEYPOINTS, fps, c.keypoint_smoothing)
         tracks = tracks.sort_values(["frame", "track_id"]).reset_index(drop=True)
         tracks.round(3).to_csv(os.path.join(output_folder, f"{name}_tracks.csv"), index=False)
