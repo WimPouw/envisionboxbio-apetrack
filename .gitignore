@@ -6,6 +6,7 @@ weights/
 demo/samples/
 demo/testing/
 demo/output/
+demo/tuning/
 demo/_site/
 demo/.quarto/
 *.pyc
